@@ -11,104 +11,92 @@ const kakaoPayBrideLink = [
 
 // 페이지 로드 시에 애니메이션 적용
 document.addEventListener("DOMContentLoaded", function () {
-  const UlElements = document.querySelectorAll(".account-panel ul");
+  const UlElements = document.querySelectorAll('.account-panel ul');
   const KakaoButtonList = [];
   UlElements.forEach((UlElement, ulIndex) => {
-    const LiElements = UlElement.querySelectorAll("li");
+    const LiElements = UlElement.querySelectorAll('li');
     LiElements.forEach((element, liIndex) => {
-      const copyTxt = element.querySelector("p").innerText;
-      console.log(copyTxt, "copyTxt");
-
-      const copyButton = element.querySelectorAll("button")[0];
-      copyButton.addEventListener("click", function () {
+      const copyTxt = element.querySelector('p').innerText;
+      console.log(copyTxt, 'copyTxt');
+      
+      const copyButton = element.querySelectorAll('button')[0];
+      copyButton.addEventListener('click', function () {
         copy(copyTxt);
       });
 
-      const kakaoButton = element.querySelectorAll("button")[1];
-      const kakaoPayLinkList =
-        ulIndex === 0 ? kakaoPayGroomLink : kakaoPayBrideLink;
+      const kakaoButton = element.querySelectorAll('button')[1];
+      const kakaoPayLinkList = ulIndex === 0 ? kakaoPayGroomLink : kakaoPayBrideLink;
       if (kakaoPayLinkList[liIndex]) {
-        kakaoButton.addEventListener("click", function () {
+        kakaoButton.addEventListener('click', function () {
           window.location.href = kakaoPayLinkList[liIndex];
         });
       } else {
-        kakaoButton.style.display = "none";
+        kakaoButton.style.display = 'none';
       }
     });
   });
 });
 
 function copy(text) {
-  if (navigator.userAgent.toLowerCase().includes("kakaotalk")) {
-    copyTextInKakaoTalk(text);
+  // iOS와 안드로이드 모두 지원하는 복사 기능
+  if (navigator.clipboard && window.isSecureContext) {
+    // 기본 Clipboard API 사용 (안드로이드)
+    navigator.clipboard.writeText(text)
+      .then(() => {
+        alert("클립보드에 복사되었습니다.");
+      })
+      .catch(() => {
+        // Clipboard API 실패시 fallback
+        fallbackCopyTextToClipboard(text);
+      });
   } else {
-    navigator.clipboard?.writeText(text);
-    // 복사완료에 대해 Alert으로 띄우기
-    alert("클립보드에 복사되었습니다.");
+    // iOS나 보안 컨텍스트가 아닌 경우 fallback 사용
+    fallbackCopyTextToClipboard(text);
   }
 }
 
-function copyTextInKakaoTalk(text) {
-  // 결과를 표시할 요소
-  const resultElement = document.getElementById("copyResult");
-
-  // textarea 생성
-  const textarea = document.createElement("textarea");
-  textarea.value = text;
-
+function fallbackCopyTextToClipboard(text) {
+  const textArea = document.createElement("textarea");
+  textArea.value = text;
+  
+  // iOS에서 자동 확대 방지
+  textArea.style.fontSize = '12pt';
   // 화면에서 숨기기
-  textarea.style.position = "fixed";
-  textarea.style.left = "-999999px";
-  textarea.style.top = "-999999px";
-
-  document.body.appendChild(textarea);
-
-  // iOS의 경우 스크롤을 방지하기 위해 특별한 처리 필요
+  textArea.style.position = 'fixed';
+  textArea.style.top = '0';
+  textArea.style.left = '0';
+  textArea.style.width = '2em';
+  textArea.style.height = '2em';
+  textArea.style.padding = 0;
+  textArea.style.border = 'none';
+  textArea.style.outline = 'none';
+  textArea.style.boxShadow = 'none';
+  textArea.style.background = 'transparent';
+  
+  document.body.appendChild(textArea);
+  
   if (navigator.userAgent.match(/ipad|iphone/i)) {
-    textarea.contentEditable = true;
-    textarea.readOnly = true;
-
-    // 선택 범위 생성
+    // iOS 워크어라운드
     const range = document.createRange();
-    range.selectNodeContents(textarea);
-
+    range.selectNodeContents(textArea);
     const selection = window.getSelection();
     selection.removeAllRanges();
     selection.addRange(range);
-    textarea.setSelectionRange(0, 999999);
+    textArea.setSelectionRange(0, 999999);
   } else {
-    textarea.select();
+    textArea.select();
   }
 
   try {
-    // 복사 시도
-    const successful = document.execCommand("copy");
-
-    // 결과 표시
+    const successful = document.execCommand('copy');
     if (successful) {
-      showResult("복사되었습니다!", "success");
+      alert("클립보드에 복사되었습니다.");
     } else {
-      showResult("복사에 실패했습니다. 다시 시도해주세요.", "error");
+      alert("복사에 실패했습니다. 직접 선택하여 복사해주세요.");
     }
   } catch (err) {
-    showResult("복사에 실패했습니다. 다시 시도해주세요.", "error");
-  } finally {
-    // 정리
-    document.body.removeChild(textarea);
+    alert("복사에 실패했습니다. 직접 선택하여 복사해주세요.");
   }
-}
 
-// 결과 메시지 표시 함수
-function showResult(message, type) {
-  const resultElement = document.getElementById("copyResult");
-  if (!resultElement) return;
-
-  resultElement.textContent = message;
-  resultElement.className = `copy-result ${type}`;
-
-  // 2초 후 메시지 제거
-  setTimeout(() => {
-    resultElement.textContent = "";
-    resultElement.className = "copy-result";
-  }, 2000);
+  document.body.removeChild(textArea);
 }
