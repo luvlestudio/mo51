@@ -16,11 +16,10 @@ document.addEventListener('DOMContentLoaded', function () {
   UlElements.forEach((UlElement, ulIndex) => {
     const LiElements = UlElement.querySelectorAll('li');
     LiElements.forEach((element, liIndex) => {
-      const copyTxt = element.querySelector('p').innerText;
-      console.log(copyTxt, 'copyTxt');
-
       const copyButton = element.querySelectorAll('button')[0];
       copyButton.addEventListener('click', function () {
+        const copyTxt = element.querySelectorAll('p')[0].innerText;
+        console.log(copyTxt, 'copyTxt');
         copy(copyTxt);
       });
 
